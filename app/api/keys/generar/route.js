@@ -15,9 +15,6 @@ const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = 20;
 
 export async function POST(req) {
-  const origin = req.headers.get('origin');
-  const allowed = (process.env.KEYS_ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean);
-  if (origin && origin !== new URL(req.url).origin && !allowed.includes(origin)) return apiJson(req, { success: false, error: 'Origen no autorizado' }, 403);
   try {
     await connectDB();
     await GeneratedKey.init();

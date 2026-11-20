@@ -12,9 +12,6 @@ const MAX_ATTEMPTS = 5;
 export function OPTIONS(req) { return corsOptions(req); }
 
 export async function POST(req) {
-  const origin = req.headers.get('origin');
-  const allowed = (process.env.KEYS_ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean);
-  if (origin && origin !== new URL(req.url).origin && !allowed.includes(origin)) return apiJson(req, { success: false, error: 'Origen no autorizado' }, 403);
   let body;
   try { body = await req.json(); }
   catch { return apiJson(req, { success: false, error: 'El cuerpo debe ser JSON válido' }, 400); }

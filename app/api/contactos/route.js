@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../lib/admin-auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/mongodb';
 import Contacto from '../../../models/Contacto';
@@ -89,7 +88,6 @@ function parsearLinea(linea) {
 }
 
 export async function GET(request) {
-  if (!(adminAuthorized(request))) return unauthorized();
   try {
     const { searchParams } = new URL(request.url);
     const buscar = (searchParams.get('buscar') || searchParams.get('q') || '').trim().slice(0, 100);
@@ -135,7 +133,6 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!(adminAuthorized(request))) return unauthorized();
   try {
     const body = await request.json();
     let registros = [];
@@ -212,7 +209,6 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  if (!(adminAuthorized(request))) return unauthorized();
   try {
     const { searchParams } = new URL(request.url);
     const telegramId = Number(searchParams.get('telegramId') || searchParams.get('id'));

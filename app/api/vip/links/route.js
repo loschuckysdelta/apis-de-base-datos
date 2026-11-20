@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../../lib/admin-auth';
 import { connectDB } from '../../../../lib/mongodb';
 import Vip from '../../../../models/VipMembership';
 import { response, validDays } from '../../../../lib/vip';
@@ -7,7 +6,6 @@ export const dynamic = 'force-dynamic';
 const PLANS = { '7': 7, '30': 30, '60': 60, 'permanent': null };
 
 export async function POST(req) {
-  if (!(adminAuthorized(req))) return unauthorized();
   try {
     const b = await req.json();
     const link = String(b.invite_link || '').trim();

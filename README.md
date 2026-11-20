@@ -1,46 +1,31 @@
-# LOS CHUCKYS — BOT APIS (Next.js 15 / MongoDB)
+# LOS CHUCKYS — BOT APIS, PANEL SIN LOGIN
 
-Proyecto revisado: panel de usuarios, contactos, baneados, membresías VIP, generación/canje de keys y comprobación de visita. Los datos de MongoDB **no** se incluyen ni modifican con este ZIP.
+Panel directo: no requiere contraseña, inicio de sesión, cookies administrativas ni API keys para acceder a rutas administrativas. Esta versión mantiene las funciones de usuarios, contactos, VIP, keys y verificación. No se modifica la base de datos con el ZIP.
 
-## Instalación local (Windows / PowerShell)
+## Configuración
 
-1. Extrae el ZIP; entra a `BOT-APIS-main`.
-2. Abre **`.env.local`** (archivo, no carpeta) y configura `MONGODB_URI` con tu cadena de conexión de MongoDB Atlas. Se generaron claves aleatorias locales para los demás secretos; puedes reemplazarlas.
-3. Ejecuta:
+1. En `.env.local` escribe la cadena completa `MONGODB_URI` que facilita MongoDB Atlas en **Connect > Drivers**, con usuario y contraseña **de MongoDB Atlas** (solo para conectar al servidor). **No es una contraseña del panel**.
+2. `MONGODB_DB=bot_apis` si ese es el nombre de tu base de datos.
+3. Instala dependencias y arranca:
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-4. Entra a `http://localhost:3000/login.html` y usa la clave `ADMIN_PANEL_PASSWORD` de `.env.local`. La sesión se guarda en cookie `HttpOnly` durante 8 horas. No copies esa contraseña a JavaScript.
+4. Entra a `http://localhost:3000/` o `http://localhost:3000/index.html`. No hay login. El historial se abre en `/keys-historial.html`.
 
-## Configuración en Vercel
+### Vercel
 
-En **Settings → Environment Variables** registra `MONGODB_URI`, `MONGODB_DB`, `ADMIN_PANEL_PASSWORD`, `ADMIN_SESSION_SECRET` y `API_ACCESS_KEY`. Copia los valores adecuados desde `.env.local` a tu configuración privada de Vercel o genera otros nuevos. Los archivos `.env.local` no se suben automáticamente a Vercel. Vuelve a desplegar tras configurar. **Nunca publiques claves o URIs de MongoDB en Git.**
+Configura las variables **MONGODB_URI** y **MONGODB_DB** en **Settings > Environment Variables** y realiza un *Redeploy*. El `.env.local` de tu PC no se transmite a Vercel. `TU_CLUSTER` es un marcador: debes poner la dirección completa de Atlas. Si la cadena de conexión no es válida, el panel se abre, pero los datos no se cargarán.
 
-`API_ACCESS_KEY`: clave de acceso para un bot o backend externo, usando encabezado `X-API-Key`. No agregar al navegador, aplicación móvil ni frontend. Un cliente anterior que llamaba rutas privadas sin este encabezado deberá actualizarse.
+### Rutas principales
 
-## Rutas principales
+- Panel: `/` y `/index.html` (acceso directo).
+- Historial: `/keys-historial.html` (acceso directo).
+- API: `/api/users`, `/api/contactos`, `/api/baneados`, `/api/vip`, `/api/keys/generar`, `/api/keys/canjear`, `/api/keys/listar`, `/api/health` y demás rutas del proyecto. No requieren contraseña del panel.
+- Las operaciones mantienen validaciones de datos y algunos límites antiabuso para claves.
 
-- Admin: `POST /api/admin/login` (JSON `{ "password": "..." }`), `GET /api/admin/session`, `POST /api/admin/logout`.
-- Panel: `/login.html` y `/index.html`.
-- Rutas **privadas** (sesión del panel o `X-API-Key` desde un backend): `/api/users`, `/api/contactos`, `/api/contactos/corregir`, `/api/baneados`, `/api/vip`, `/api/vip/links`, `/api/vip/activate`, `/api/vip/expire`, `/api/vip/renew`, `/api/stats`, `/api/health`.
-- Keys: `POST /api/keys/generar` sin body; `POST /api/keys/canjear` JSON `{ "key": "000000", "usuarioId": "opcional" }`. **La generación es pública por compatibilidad** y solo tiene límite de solicitudes; no uses estas keys cortas como licencias pagadas.
-- Historial de keys: `/api/keys/listar` y alias `/api/keys/resumen`, ahora **privados**. Aceptan la sesión del panel, la sesión antigua `/keys-acceso.html` o `X-API-Key`.
-- Verificación de visita: `GET/POST /api/verificar` sigue pública y opcionalmente protegida por Turnstile. No confirma identidad. `GET /api/verificar/registros` exige sesión admin o secreto `VERIFICAR_ADMIN_SECRET`.
+### Advertencia
 
-## Limpieza y reparaciones
-
-- Eliminada la ruta obsoleta `/api/verificar/enlace` que importaba funciones inexistentes; no se usaba según README anterior.
-- Corregida la página de keys para que coincida con la API de creación pública: cada POST genera un código nuevo.
-- Añadida autorización al panel, VIP, baneos, importaciones y listados sensibles; reducido el acceso CORS.
-- Respuestas de error privadas no filtran mensajes internos del servidor.
-- Reparación masiva de contactos limitada a un tamaño prudente: si hay más de 20 000 registros, se detiene sin cambiar nada.
-- `.gitignore` excluye `.env.local`, `.next`, `node_modules` y archivos temporales.
-
-## Notas de seguridad
-
-No existe garantía absoluta de cero fugas. Si tus credenciales antiguas se expusieron, **rótalas en MongoDB Atlas y Vercel**. Los secretos generados aquí son nuevos y no permiten recuperar las credenciales anteriores. Si se perdió la contraseña de Atlas, crea una nueva desde **Database Access** y actualiza `MONGODB_URI`.
-
-`/api/verificar` registra una confirmación de visita con un ID proporcionado por el solicitante; **no demuestra que sea dueño del Telegram ID**. Para comprobar identidad, necesitas autenticación real. Si se usan keys para pagos, debe rediseñarse emisión y canje con códigos más fuertes y autenticación.
+**No existe ningún control de acceso para administrar los datos.** Cualquiera que conozca la URL de un despliegue público podrá consultar, modificar o eliminar registros mediante la API, incluida información de contactos, VIP y keys. Si quieres evitarlo sin contraseñas, restringe el acceso por red o mantén el panel en un entorno privado. Nunca incluyas `.env.local` en GitHub: contiene la contraseña de la conexión a MongoDB.

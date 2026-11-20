@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../../lib/admin-auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/mongodb';
 import Contacto from '../../../../models/Contacto';
@@ -131,7 +130,6 @@ function analizar(contactos) {
 }
 
 export async function POST(request) {
-  if (!(adminAuthorized(request))) return unauthorized();
   try {
     const body = await request.json().catch(() => ({}));
     const aplicar = body.aplicar === true;

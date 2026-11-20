@@ -1,9 +1,7 @@
-import { adminAuthorized, unauthorized } from '../../../../lib/admin-auth';
 import {connectDB} from '../../../../lib/mongodb';
 import Vip from '../../../../models/VipMembership';
 import {response} from '../../../../lib/vip';
 export async function POST(req){
-  if (!(adminAuthorized(req))) return unauthorized();
   try {
     const b=await req.json();
     const userId=String(b.telegramUserId||'');

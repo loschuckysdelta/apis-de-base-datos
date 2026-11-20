@@ -24,7 +24,7 @@ const viewMeta = {
 const apiDefinitions = [
   { method: 'POST', path: '/api/verificar', description: 'Registra la confirmación de visita de un usuario existente, sin token de Telegram. Dura 24 horas.', body: { telegramId: '123456789' } },
   { method: 'GET', path: '/api/verificar?telegramId=123456789', description: 'Consulta el estado por ID de Telegram, sin token.' },
-  { method: 'GET', path: '/api/verificar/registros', description: 'Listado privado para administrador; requiere VERIFICAR_ADMIN_SECRET (opcional).' },
+  { method: 'GET', path: '/api/verificar/registros', description: 'Listado de verificaciones sin inicio de sesión.' },
   { method: 'GET', path: '/api/users', description: 'Lista usuarios con paginación y filtros.' },
   { method: 'GET', path: '/api/users?buscar=lenin', description: 'Busca por ID, nombre o username.' },
   { method: 'POST', path: '/api/users', description: 'Registra o actualiza un usuario.', body: { telegramId: 123456789, nombre: 'Lenin', username: 'loschuckys_pe' } },
@@ -915,10 +915,6 @@ function bindEvents() {
   $('#vipPermanent').addEventListener('change', () => { $('#vipDays').disabled = $('#vipPermanent').checked; $('#vipDays').required = !$('#vipPermanent').checked; });
   $('#methodSelect').addEventListener('change', updateTesterBodyVisibility);
   $('#sendApi').addEventListener('click', runApi);
-  $('#logoutAdmin').addEventListener('click', async () => {
-    await fetch('/api/admin/logout', { method: 'POST', cache: 'no-store' }).catch(() => {});
-    location.replace('/login.html');
-  });
   $('#copyResponse').addEventListener('click', () => copyText($('#apiResponse').textContent, 'Respuesta copiada'));
 }
 
@@ -961,11 +957,6 @@ async function createVip(event) {
 
 async function init() {
   detectWrongServer();
-  try {
-    const response = await fetch('/api/admin/session', { cache: 'no-store' });
-    const session = await response.json();
-    if (!session.authenticated) { location.replace('/login.html'); return; }
-  } catch { location.replace('/login.html'); return; }
   setCurrentDate();
   setInterval(setCurrentDate, 60000);
   renderApiDocs();

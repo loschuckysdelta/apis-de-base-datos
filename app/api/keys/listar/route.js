@@ -1,5 +1,3 @@
-import { isPanelAuthenticated } from '../../../../lib/keys-panel-auth';
-import { adminAuthorized, unauthorized } from '../../../../lib/admin-auth';
 import mongoose from 'mongoose';
 import { connectDB } from '../../../../lib/mongodb';
 import GeneratedKey from '../../../../models/GeneratedKey';
@@ -8,11 +6,10 @@ import { apiJson, keyState } from '../../../../lib/keys';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export function OPTIONS() { return unauthorized(); }
+export function OPTIONS(req) { return new Response(null, { status: 204 }); }
 
-// Historial privado. Autoriza sesión del panel o petición del backend.
+// Historial público, sin contraseñas ni sesiones.
 export async function GET(req) {
-  if (!(adminAuthorized(req) || isPanelAuthenticated(req))) return unauthorized();
   const url = new URL(req.url);
   const estado = url.searchParams.get('estado') || 'generadas';
   if (!['generadas', 'canjeadas'].includes(estado)) {

@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../lib/admin-auth';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/mongodb';
 import User from '../../../models/User';
@@ -6,7 +5,6 @@ import Contacto from '../../../models/Contacto';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  if (!adminAuthorized(req)) return unauthorized();
   try {
     await connectDB();
     // Todo el panel trabaja con hora de Perú (UTC-5, sin horario de verano).

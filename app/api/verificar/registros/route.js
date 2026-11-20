@@ -1,18 +1,15 @@
-import { adminAuthorized } from '../../../../lib/admin-auth';
 import { connectDB } from '../../../../lib/mongodb';
 import User from '../../../../models/User';
 import Verificacion from '../../../../models/Verificacion';
-import { isAdminAuthorized, json, options, originAllowed } from '../../../../lib/verificar';
+import { json, options, originAllowed } from '../../../../lib/verificar';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export function OPTIONS(req) { return options(req); }
 
-// Solo un administrador con clave privada puede consultar la lista completa.
+// Consulta directa, sin sesión de administrador.
 export async function GET(req) {
-  if (!originAllowed(req)) return json(req, { success: false, error: 'Origen no autorizado' }, 403);
-  if (!isAdminAuthorized(req) && !adminAuthorized(req)) return json(req, { success: false, error: 'No autorizado' }, 401);
   const params = new URL(req.url).searchParams;
   const page = Math.min(10000, Math.max(1, Number.parseInt(params.get('page'), 10) || 1));
   const limit = Math.min(100, Math.max(1, Number.parseInt(params.get('limit'), 10) || 20));

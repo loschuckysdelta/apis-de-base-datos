@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../lib/admin-auth';
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { connectDB } from '../../../lib/mongodb';
@@ -17,7 +16,6 @@ function json(body, status = 200) {
 }
 
 export async function GET(req) {
-  if (!adminAuthorized(req)) return unauthorized();
   const started = Date.now();
   try {
     await connectDB();

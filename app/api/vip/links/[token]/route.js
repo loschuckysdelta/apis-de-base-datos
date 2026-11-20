@@ -1,4 +1,3 @@
-import { adminAuthorized, unauthorized } from '../../../../../lib/admin-auth';
 import { connectDB } from '../../../../../lib/mongodb';
 import Vip from '../../../../../models/VipMembership';
 import { response } from '../../../../../lib/vip';
@@ -8,7 +7,6 @@ function decodeToken(value) { try { return decodeURIComponent(value); } catch { 
 function toLink(m) { return { plan: m.permanent ? 'permanent' : String(m.days), used: m.status !== 'pending', telegram_user_id: m.telegramUserId }; }
 
 export async function GET(req, { params }) {
-  if (!adminAuthorized(req)) return unauthorized();
   try {
     const { token } = await params;
     await connectDB();
@@ -19,7 +17,6 @@ export async function GET(req, { params }) {
 
 // Compatibilidad con bots que marcan el enlace como utilizado tras registrar al usuario.
 export async function PATCH(req, { params }) {
-  if (!adminAuthorized(req)) return unauthorized();
   try {
     const { token } = await params;
     const b = await req.json();

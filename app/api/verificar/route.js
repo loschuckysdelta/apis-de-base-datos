@@ -3,7 +3,7 @@ import User from '../../../models/User';
 import Verificacion from '../../../models/Verificacion';
 import VerificacionIntento from '../../../models/VerificacionIntento';
 import {
-  checkCaptcha, durationMilliseconds, getVerificationStatus,
+  durationMilliseconds, getVerificationStatus,
   ipRateLimitIdentity, json, options, originAllowed, parseTelegramId
 } from '../../../lib/verificar';
 
@@ -46,7 +46,6 @@ async function countAttempts(identidad, ventana, now, max) {
 // GET /api/verificar?telegramId=123456789
 // No requiere token: solo consulta estado registrado, NO acredita identidad.
 export async function GET(req) {
-  if (!originAllowed(req)) return json(req, { success: false, error: 'Origen no autorizado' }, 403);
   const telegramId = parseTelegramId(new URL(req.url).searchParams.get('telegramId'));
   if (!telegramId) return json(req, { success: false, error: 'telegramId inválido' }, 400);
   try {
@@ -64,7 +63,6 @@ export async function GET(req) {
 // POST /api/verificar body: {"telegramId":"123456789"}
 // Guarda la confirmación de visita. No exige bot, firma ni token de Telegram.
 export async function POST(req) {
-  if (!originAllowed(req)) return json(req, { success: false, error: 'Origen no autorizado' }, 403);
   let body;
   try { body = await req.json(); } catch { return json(req, { success: false, error: 'JSON inválido' }, 400); }
   const telegramId = parseTelegramId(body?.telegramId);
@@ -92,12 +90,6 @@ export async function POST(req) {
     if (actual && new Date(actual.expiraEn).getTime() > now.getTime()) {
       return json(req, { ...getVerificationStatus(actual, telegramId), mensaje: 'La confirmación ya estaba activa' });
     }
-
-    // Si Turnstile está configurado, comprobamos el reto antes de guardar.
-    let captchaOK = false;
-    try { captchaOK = await checkCaptcha(body?.turnstileToken); }
-    catch (error) { console.error('Turnstile:', error.message); }
-    if (!captchaOK) return json(req, { success: false, verificado: false, error: 'Completa la comprobación antirobot' }, 403);
 
     const fecha = new Date();
     const expiraEn = new Date(fecha.getTime() + durationMilliseconds());
