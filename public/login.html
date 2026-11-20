@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>Acceso CHUCKY</title>
+<style>*,*::before,*::after{box-sizing:border-box}body{font:16px system-ui,sans-serif;background:radial-gradient(ellipse at 50% 0%,#39104b,#0b0d16 75%);color:#fff;min-height:100vh;display:grid;place-items:center;margin:0;padding:20px}main{width:min(420px,100%);background:#171525;border:1px solid #57436e;padding:30px;border-radius:18px;box-shadow:0 20px 70px #0009}h1{margin:0 0 8px}p{color:#bbb4c9;line-height:1.5}label{display:block;margin:25px 0 8px}input{width:100%;padding:14px;border-radius:9px;border:1px solid #665a77;background:#100f17;color:#fff;font:inherit}button{background:#790699;color:#fff;width:100%;border:0;border-radius:9px;padding:14px;margin-top:20px;font-weight:bold;cursor:pointer}button:disabled{opacity:.6}#message{min-height:1.5em;color:#ffabaf}</style></head><body>
+<main><h1>LOS CHUCKYS</h1><p>Acceso seguro al panel de administración. Configura las credenciales en <code>.env.local</code> o en Vercel.</p>
+<form id="login"><label for="password">Contraseña del administrador</label><input id="password" type="password" autocomplete="current-password" minlength="16" maxlength="256" required><button id="enter">Entrar al panel</button></form><p id="message" role="alert"></p></main>
+<script>
+'use strict';
+fetch('/api/admin/session',{cache:'no-store'}).then(r=>r.json()).then(d=>{if(d.authenticated)location.replace('/index.html')}).catch(()=>{});
+document.getElementById('login').addEventListener('submit',async event=>{event.preventDefault();const button=document.getElementById('enter'),msg=document.getElementById('message');button.disabled=true;msg.textContent='';try{const response=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('password').value}),cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Error al iniciar sesión');document.getElementById('password').value='';location.replace('/index.html')}catch(error){msg.textContent=error.message}finally{button.disabled=false}});
+</script></body></html>

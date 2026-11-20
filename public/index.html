@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Panel CHUCKY para administrar usuarios y contactos de Telegram" />
+  <meta name="color-scheme" content="dark" />
+  <title>CHUCKY Administrador</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="offlineBanner" class="offline-banner" hidden>
+    Este panel debe abrirse desde Next.js. Ejecuta <code>npm run dev</code> y entra a <strong>http://localhost:3000</strong>.
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row">
+        <div class="brand">
+          <span class="brand-name">CHUCKY</span>
+          <span class="brand-role">Administrador</span>
+        </div>
+        <button id="closeSidebar" class="icon-btn sidebar-close" type="button" aria-label="Cerrar menú">×</button>
+      </div>
+
+      <nav class="menu" aria-label="Navegación principal">
+        <button class="menu-item active" type="button" data-view="dashboard">
+          <span class="menu-icon">▦</span><span>Dashboard</span>
+        </button>
+        <button class="menu-item" type="button" data-view="usuarios">
+          <span class="menu-icon">♙</span><span>Usuarios</span>
+        </button>
+        <button class="menu-item" type="button" data-view="contactos">
+          <span class="menu-icon">♧</span><span>Contactos</span>
+        </button>
+        <button class="menu-item" type="button" data-view="baneados">
+          <span class="menu-icon">⊘</span><span>Baneados</span>
+        </button>
+        <button class="menu-item" type="button" data-view="importar">
+          <span class="menu-icon">⇧</span><span>Importar contactos</span>
+        </button>
+        <button class="menu-item" type="button" data-view="apis">
+          <span class="menu-icon">&lt;/&gt;</span><span>APIs</span><b class="new-pill">NUEVO</b>
+        </button>
+        <button class="menu-item" type="button" data-view="vip">
+          <span class="menu-icon">♛</span><span>VIP Telegram</span><b class="new-pill">NUEVO</b>
+        </button>
+      </nav>
+
+      <div class="admin-card">
+        <div class="admin-avatar">C</div>
+        <div>
+          <strong>CHUCKY</strong>
+          <span>Administrador</span>
+        </div>
+        <i class="online-dot" title="En línea"></i>
+      </div>
+    </aside>
+
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="mobileMenu" class="icon-btn" type="button" aria-label="Abrir menú">☰</button>
+          <div class="top-brand">
+            <span class="top-brand-name">CHUCKY</span>
+            <span>Administrador</span>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div id="apiConnection" class="connection-chip pending"><i></i><span>Comprobando API…</span></div>
+          <button id="refreshAll" class="icon-btn" type="button" aria-label="Actualizar datos" title="Actualizar datos">↻</button>
+          <button id="logoutAdmin" class="btn btn-outline small" type="button" title="Cerrar sesión">Salir</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="page-heading">
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <p id="pageSubtitle">Resumen general de usuarios de Telegram</p>
+          </div>
+          <div class="heading-actions">
+            <div class="date-chip">▣ <span id="currentDate">—</span></div>
+            <button id="pageRefresh" class="btn btn-outline" type="button">↻ Actualizar</button>
+          </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <section id="dashboardView" class="view active-view">
+          <div class="stats-grid">
+            <article class="stat-card red-card">
+              <div class="stat-icon">♙</div>
+              <div><span>Usuarios</span><strong id="totalUsers">0</strong><small>Total registrados</small></div>
+            </article>
+            <article class="stat-card blue-card">
+              <div class="stat-icon">♧</div>
+              <div><span>Contactos</span><strong id="totalContacts">0</strong><small>Contactos guardados</small></div>
+            </article>
+            <article class="stat-card amber-card">
+              <div class="stat-icon">⊘</div>
+              <div><span>Baneados</span><strong id="blockedUsers">0</strong><small>Usuarios bloqueados</small></div>
+            </article>
+            <article class="stat-card green-card">
+              <div class="stat-icon">＋</div>
+              <div><span>Registrados hoy</span><strong id="newToday">0</strong><small>Nuevos usuarios del día</small></div>
+            </article>
+          </div>
+
+          <article class="panel table-panel">
+            <div class="panel-title-row">
+              <div>
+                <h2>Usuarios recientes</h2>
+                <p id="dashboardUsersSummary">Cargando usuarios…</p>
+              </div>
+              <button class="btn btn-outline" type="button" data-open-view="usuarios">Ver todos</button>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>ID Telegram</th><th>Nombre</th><th>Username</th><th>Estado</th><th>Fecha de registro</th><th>Última actividad</th><th>Acción</th></tr></thead>
+                <tbody id="dashboardUsersBody"><tr><td colspan="7" class="loading-cell">Cargando…</td></tr></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <!-- USUARIOS -->
+        <section id="usuariosView" class="view">
+          <article class="panel table-panel no-top-margin">
+            <div class="panel-title-row responsive-row">
+              <div>
+                <h2>Lista de usuarios</h2>
+                <p id="usersResultsText">Cargando…</p>
+              </div>
+              <div class="table-controls">
+                <select id="usersStatus" class="control" aria-label="Filtrar por estado">
+                  <option value="todos">Todos los estados</option>
+                  
+                  <option value="bloqueados">Bloqueados</option>
+                </select>
+                <div class="search-wrap"><span>⌕</span><input id="usersSearch" class="control" type="search" placeholder="Buscar por ID, nombre o username…" autocomplete="off" /></div>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>ID Telegram</th><th>Nombre</th><th>Username</th><th>Estado</th><th>Fecha de registro</th><th>Última actividad</th><th>Acción</th></tr></thead>
+                <tbody id="usersBody"><tr><td colspan="7" class="loading-cell">Cargando…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="pagination-bar">
+              <span id="usersPageSummary">Mostrando resultados…</span>
+              <div class="pager">
+                <button id="usersFirst" type="button" aria-label="Primera página">«</button>
+                <button id="usersPrev" type="button" aria-label="Página anterior">‹</button>
+                <span id="usersPageButtons" class="page-buttons"></span>
+                <button id="usersNext" type="button" aria-label="Página siguiente">›</button>
+                <button id="usersLast" type="button" aria-label="Última página">»</button>
+              </div>
+              <select id="usersLimit" class="limit-select" aria-label="Resultados por página">
+                <option value="10">10</option><option value="20">20</option><option value="50">50</option><option value="100">100</option>
+              </select>
+            </div>
+          </article>
+        </section>
+
+        <!-- BANEADOS -->
+        <section id="baneadosView" class="view">
+          <article class="panel table-panel no-top-margin">
+            <div class="panel-title-row responsive-row">
+              <div>
+                <h2>Usuarios baneados</h2>
+                <p id="bannedResultsText">Cargando…</p>
+              </div>
+              <div class="table-controls">
+                <div class="search-wrap"><span>⌕</span><input id="bannedSearch" class="control" type="search" placeholder="Buscar por ID, nombre, username o motivo…" autocomplete="off" /></div>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>ID Telegram</th><th>Nombre</th><th>Username</th><th>Motivo</th><th>Fecha de baneo</th><th>Acción</th></tr></thead>
+                <tbody id="bannedBody"><tr><td colspan="6" class="loading-cell">Cargando baneados…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="pagination-bar">
+              <span id="bannedPageSummary">Mostrando resultados…</span>
+              <div class="pager">
+                <button id="bannedFirst" type="button" aria-label="Primera página">«</button>
+                <button id="bannedPrev" type="button" aria-label="Página anterior">‹</button>
+                <span id="bannedPageButtons" class="page-buttons"></span>
+                <button id="bannedNext" type="button" aria-label="Página siguiente">›</button>
+                <button id="bannedLast" type="button" aria-label="Última página">»</button>
+              </div>
+              <select id="bannedLimit" class="limit-select" aria-label="Resultados por página">
+                <option value="10">10</option><option value="20">20</option><option value="50">50</option><option value="100">100</option>
+              </select>
+            </div>
+          </article>
+        </section>
+
+        <!-- CONTACTOS -->
+        <section id="contactosView" class="view">
+          <article class="panel table-panel no-top-margin">
+            <div class="panel-title-row responsive-row">
+              <div>
+                <h2>Lista de contactos</h2>
+                <p id="contactsResultsText">Cargando…</p>
+              </div>
+              <div class="contacts-head-actions">
+                <button id="fixContacts" class="btn btn-fix" type="button" title="Corrección segura usando Usuarios como referencia">🔧 Corregir registros</button>
+                <button id="repairAllContacts" class="btn btn-repair" type="button" title="Revisa también registros antiguos que quedaron sin corregir">⚡ Reparar todo</button>
+                <div class="search-wrap contacts-search"><span>⌕</span><input id="contactsSearch" class="control" type="search" placeholder="Buscar por ID, username, nombre o teléfono…" autocomplete="off" /></div>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table contacts-table">
+                <thead><tr><th>ID Telegram</th><th>Username</th><th>Nombre</th><th>Teléfono</th><th>Registro</th><th>Acción</th></tr></thead>
+                <tbody id="contactsBody"><tr><td colspan="5" class="loading-cell">Cargando…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="pagination-bar">
+              <span id="contactsPageSummary">Mostrando resultados…</span>
+              <div class="pager">
+                <button id="contactsFirst" type="button" aria-label="Primera página">«</button>
+                <button id="contactsPrev" type="button" aria-label="Página anterior">‹</button>
+                <span id="contactsPageButtons" class="page-buttons"></span>
+                <button id="contactsNext" type="button" aria-label="Página siguiente">›</button>
+                <button id="contactsLast" type="button" aria-label="Última página">»</button>
+              </div>
+              <select id="contactsLimit" class="limit-select" aria-label="Resultados por página">
+                <option value="10">10</option><option value="20" selected>20</option><option value="50">50</option><option value="100">100</option>
+              </select>
+            </div>
+          </article>
+        </section>
+
+        <!-- IMPORTAR -->
+        <section id="importarView" class="view">
+          <div class="two-column-grid">
+            <article class="panel form-panel">
+              <div class="panel-title-row">
+                <div><h2>Importar contactos</h2><p>Formato: ID Telegram | username | nombre | teléfono</p></div>
+                <span class="mini-badge">TXT · hasta 20 000</span>
+              </div>
+
+              <div class="upload-box">
+                <div class="upload-icon">TXT</div>
+                <div class="upload-copy"><strong>Seleccionar archivo TXT</strong><span id="txtFileInfo">Ningún archivo seleccionado.</span></div>
+                <input id="contactTxtFile" type="file" accept=".txt,text/plain" hidden />
+                <button id="selectTxtFile" class="btn btn-outline" type="button">Seleccionar TXT</button>
+                <button id="removeTxtFile" class="btn btn-danger-outline" type="button" hidden>Quitar</button>
+              </div>
+
+              <label class="field-label" for="contactLines">Datos para importar</label>
+              <textarea id="contactLines" class="textarea" spellcheck="false" placeholder="1580740128 | gab_12_11 | G. | 51971386003"></textarea>
+              <p class="helper">Puedes pegar registros o cargarlos desde un TXT. Los registros se procesan por lotes para evitar solicitudes demasiado grandes.</p>
+              <div class="button-row">
+                <button id="importContacts" class="btn btn-primary" type="button">Guardar registros</button>
+                <button id="clearContactLines" class="btn btn-outline" type="button">Limpiar</button>
+              </div>
+              <div id="importResult" class="result-box">Esperando datos para importar.</div>
+            </article>
+
+            <article class="panel form-panel">
+              <div class="panel-title-row"><div><h2>Agregar un contacto</h2><p>Guarda o actualiza un registro individual.</p></div></div>
+              <form id="addContactForm" class="contact-form">
+                <label>ID Telegram<input id="newContactTelegramId" class="control" inputmode="numeric" required placeholder="1580740128" /></label>
+                <label>Username<input id="newContactUsername" class="control" placeholder="gab_12_11" /></label>
+                <label>Nombre<input id="newContactName" class="control" placeholder="G." /></label>
+                <label>Teléfono<input id="newContactPhone" class="control" inputmode="tel" required placeholder="51971386003" /></label>
+                <button id="addContactButton" class="btn btn-primary full-width" type="submit">Agregar contacto</button>
+              </form>
+              <div id="addContactResult" class="result-box">Completa los datos y presiona “Agregar contacto”.</div>
+            </article>
+          </div>
+        </section>
+
+        <!-- VIP TELEGRAM -->
+        <section id="vipView" class="view">
+          <article class="panel">
+            <div class="panel-title-row"><div><h2>Membresías VIP</h2><p>Administra usuarios y días. No se expulsa a nadie.</p></div>
+              <div style="display:flex;gap:8px"><button id="vipAdd" class="btn btn-primary small" type="button">+ Agregar VIP</button><button id="vipRefresh" class="btn btn-outline small" type="button">Actualizar</button></div></div>
+            <div id="vipList" style="overflow-x:auto">Pulsa Actualizar para cargar usuarios.</div>
+            <div id="vipResult" class="result-box" style="margin-top:12px" aria-live="polite"></div>
+          </article>
+          <dialog id="vipDialog" style="background:#101820;color:#fff;border:1px solid #354050;border-radius:14px;padding:24px;max-width:420px;width:calc(100% - 32px)">
+            <form id="vipForm" style="display:grid;gap:12px">
+              <h3 id="vipDialogTitle">Agregar VIP</h3>
+              <label>ID Telegram<input id="vipUserId" class="control" required pattern="[0-9]+" placeholder="123456789" /></label>
+              <label>Username (opcional)<input id="vipUsername" class="control" placeholder="cliente123" /></label>
+              <label>Días<input id="vipDays" type="number" class="control" min="1" max="36500" value="7" required /></label>
+              <label><input id="vipPermanent" type="checkbox" /> Acceso permanente</label>
+              <label>Acción al editar<select id="vipOperation" class="control"><option value="set">Establecer días desde ahora</option><option value="add">Agregar días al vencimiento</option></select></label>
+              <div style="display:flex;gap:8px"><button class="btn btn-primary" type="submit">Guardar</button><button id="vipCancel" class="btn btn-outline" type="button">Cancelar</button></div>
+            </form>
+          </dialog>
+        </section>
+
+        <!-- APIS -->
+        <section id="apisView" class="view">
+          <article class="panel" style="padding:18px;margin-bottom:16px">
+            <h2 style="margin-top:0">✅ Verificación de Telegram</h2>
+            <p style="color:#aab6c9;font-size:12px;line-height:1.6">La API <code>/api/verificar</code> registra la confirmación de visita de usuarios existentes y permite consultar su estado en MongoDB. No pide token de Telegram. La API de usuarios sigue sin cambios.</p>
+            <p style="color:#aab6c9;font-size:12px;line-height:1.6"><b>Uso:</b> La página envía <code>{"telegramId":"123456789"}</code> a <code>POST /api/verificar</code>. La API registra el estado durante 24 horas; <code>GET /api/verificar?telegramId=...</code> permite consultar si sigue activo.</p>
+            <p class="key-security-note">Importante: sin una prueba de identidad, el ID es solo un identificador declarativo y no acredita la propiedad de la cuenta. Para antirobots reales, habilita Turnstile. Consulta VERIFICAR-API-INSTRUCCIONES.md.</p>
+          </article>
+          <div class="api-grid">
+            <article class="panel api-docs">
+              <div class="panel-title-row"><div><h2>Endpoints disponibles</h2><p>Base URL: <code id="baseUrl">—</code></p></div></div>
+              <div id="apiRoutes" class="api-routes"></div>
+            </article>
+
+            <article class="panel api-tester">
+              <div class="panel-title-row"><div><h2>Probador de API</h2><p>Prueba rutas con tu sesión de administrador. La verificación de visita es pública y no demuestra identidad.</p></div></div>
+              <div class="tester-row">
+                <select id="methodSelect" class="control"><option>GET</option><option>POST</option><option>DELETE</option></select>
+                <input id="endpointInput" class="control" value="/api/users" />
+                <button id="sendApi" class="btn btn-primary" type="button">Ejecutar</button>
+              </div>
+              <textarea id="postBody" class="textarea code-area" spellcheck="false"></textarea>
+              <div class="response-head"><span>Respuesta</span><b id="responseStatus">—</b><button id="copyResponse" class="btn btn-outline small" type="button">Copiar</button></div>
+              <pre id="apiResponse">Selecciona un endpoint y presiona “Ejecutar”.</pre>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div id="userBanModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="userBanModalTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="userBanModalTitle">Editar usuario</h2>
+          <p id="userBanModalSubtitle">Administra el estado del usuario.</p>
+        </div>
+        <button id="closeUserBanModal" class="modal-close" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form id="userBanForm" class="modal-form">
+        <input id="banTelegramId" type="hidden" />
+        <label>Estado
+          <select id="banStatus" class="control">
+            <option value="activo">Activo</option>
+            <option value="baneado">Baneado</option>
+          </select>
+        </label>
+        <label id="banReasonLabel">Motivo del baneo
+          <input id="banReason" class="control" maxlength="180" placeholder="Ej.: spam, abuso, incumplimiento…" />
+        </label>
+        <div class="modal-user-summary" id="banUserSummary">—</div>
+        <div class="modal-actions">
+          <button id="cancelUserBan" class="btn btn-outline" type="button">Cancelar</button>
+          <button id="saveUserBan" class="btn btn-primary" type="submit">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

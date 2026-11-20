@@ -1,0 +1,6 @@
+import { adminAuthorized, unauthorized } from '../../../../lib/admin-auth';
+import {connectDB} from '../../../../lib/mongodb';
+import Vip from '../../../../models/VipMembership';
+import {response,validDays} from '../../../../lib/vip';
+export async function POST(req){
+  if (!(adminAuthorized(req))) return unauthorized();try{const b=await req.json();const days=Number(b.days);if(!validDays(days))return response({error:'Días inválidos'},400);await connectDB();const m=await Vip.findById(b.id);if(!m)return response({error:'No encontrado'},404);if(m.permanent)return response({error:'Ya es permanente'},400);if(!m.activatedAt)return response({error:'Aún no ingresó'},400);const now=Date.now(),base=Math.max(now,m.expiresAt?new Date(m.expiresAt).getTime():now);m.expiresAt=new Date(base+days*86400000);m.days=(m.days||0)+days;m.status='active';await m.save();return response({success:true,membership:m});}catch(e){return response({error:'Error interno del servidor'},500);}}
